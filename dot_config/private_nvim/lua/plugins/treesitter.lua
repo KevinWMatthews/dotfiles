@@ -14,6 +14,7 @@ local to_install = {
 	"git_rebase",
 	"gitcommit",
 	"gitignore",
+	"gotmpl",
 	"json",
 	"just",
 	"linkerscript",
