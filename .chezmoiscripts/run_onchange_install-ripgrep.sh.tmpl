@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+{{ template "bash-helpers.sh" . }}
+
+echo_command "Installing ripgrep..."
+
+{{- if eq .chezmoi.arch "amd64" }}
+TARGET="x86_64-unknown-linux-musl"
+{{- else }}
+{{ fail (printf "unsupported arch: %s" .chezmoi.arch) }}
+{{- end }}
+
+{{- if not .ripgrep.version }}
+{{ fail "ripgrep.version is not set" }}
+{{- else }}
+VERSION="{{ .ripgrep.version }}"
+{{- end }}
+INSTALL_ROOT="$HOME/.local/opt/ripgrep-$VERSION"
+BIN_LINK="$HOME/.local/bin/rg"
+
+# Exit success if already installed
+# To reinstall, delete the binary and clear chezmoi's scriptState, then apply
+if [ -x "$BIN_LINK" ] && [ "$(readlink -f "$BIN_LINK")" = "$INSTALL_ROOT/rg" ]; then
+    echo "ripgrep already installed"
+    exit 0
+fi
+
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+TARBALL="$TMP/ripgrep-$VERSION.tar.gz"
+
+URL="https://github.com/BurntSushi/ripgrep/releases/download/${VERSION}/ripgrep-${VERSION}-${TARGET}.tar.gz"
+echo "Downloading $URL to $TARBALL..."
+curl --fail --silent --show-error \
+    --location "$URL" \
+    --output "$TARBALL"
+
+DEST="$(dirname "$INSTALL_ROOT")"
+echo "Extracting $TARBALL to $DEST..."
+rm -rf "$INSTALL_ROOT"
+mkdir -p "$DEST"
+tar --extract \
+    --file "$TARBALL" \
+    --directory "$DEST" \
+    --transform "s|^ripgrep-${VERSION}-${TARGET}|ripgrep-${VERSION}|"
+
+mkdir -p "$HOME/.local/bin"
+ln --symbolic --force "$INSTALL_ROOT/rg" "$BIN_LINK"
+
+echo "Installed ripgrep"

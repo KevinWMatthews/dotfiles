@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+{{ template "bash-helpers.sh" . }}
+
+echo_command "Installing bat..."
+
+{{- if eq .chezmoi.arch "amd64" }}
+TARGET="x86_64-unknown-linux-gnu"
+{{- else }}
+{{ fail (printf "unsupported arch: %s" .chezmoi.arch) }}
+{{- end }}
+
+{{- if not .bat.version }}
+{{ fail "bat.version is not set" }}
+{{- else }}
+VERSION="{{ .bat.version }}"
+{{- end }}
+INSTALL_ROOT="$HOME/.local/opt/bat-$VERSION"
+BIN_LINK="$HOME/.local/bin/batcat"
+
+# Exit success if already installed
+# To reinstall, delete the binary and clear chezmoi's scriptState, then apply
+if [ -x "$BIN_LINK" ] && [ "$(readlink -f "$BIN_LINK")" = "$INSTALL_ROOT/bat" ]; then
+    echo "bat already installed"
+    exit 0
+fi
+
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+TARBALL="$TMP/bat-$VERSION.tar.gz"
+
+URL="https://github.com/sharkdp/bat/releases/download/${VERSION}/bat-${VERSION}-${TARGET}.tar.gz"
+echo "Downloading $URL to $TARBALL..."
+curl --fail --silent --show-error \
+    --location "$URL" \
+    --output "$TARBALL"
+
+DEST="$(dirname "$INSTALL_ROOT")"
+echo "Extracting $TARBALL to $DEST..."
+rm -rf "$INSTALL_ROOT"
+mkdir -p "$DEST"
+tar --extract \
+    --file "$TARBALL" \
+    --directory "$DEST" \
+    --transform "s|^bat-${VERSION}-${TARGET}|bat-${VERSION}|"
+
+mkdir -p "$HOME/.local/bin"
+ln --symbolic --force "$INSTALL_ROOT/bat" "$BIN_LINK"
+
+echo "Installed bat"

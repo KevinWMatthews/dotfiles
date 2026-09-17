@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+{{ template "bash-helpers.sh" . }}
+
+echo_command "Installing fzf..."
+
+{{- if eq .chezmoi.arch "amd64" }}
+ARCH="amd64"
+{{- else }}
+{{ fail (printf "unsupported arch: %s" .chezmoi.arch) }}
+{{- end }}
+
+{{- if not .fzf.version }}
+{{ fail "fzf.version is not set" }}
+{{- else }}
+VERSION_TAG="{{ .fzf.version }}"
+{{- end }}
+
+# strip 'v' prefix from version tag
+VERSION="${VERSION_TAG#v}"
+INSTALL_ROOT="$HOME/.local/opt/fzf-$VERSION_TAG"
+BIN_LINK="$HOME/.local/bin/fzf"
+
+# Exit success if already installed
+# To reinstall, delete the binary and clear chezmoi's scriptState, then apply
+if [ -x "$BIN_LINK" ] && [ "$(readlink -f "$BIN_LINK")" = "$INSTALL_ROOT/fzf" ]; then
+    echo "fzf already installed"
+    exit 0
+fi
+
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+TARBALL="$TMP/fzf-$VERSION_TAG.tar.gz"
+
+URL="https://github.com/junegunn/fzf/releases/download/${VERSION_TAG}/fzf-${VERSION}-linux_${ARCH}.tar.gz"
+echo "Downloading $URL to $TARBALL..."
+curl --fail --silent --show-error \
+    --location "$URL" \
+    --output "$TARBALL"
+
+DEST="$(dirname "$INSTALL_ROOT")"
+echo "Extracting $TARBALL to $DEST..."
+rm -rf "$INSTALL_ROOT"
+mkdir -p "$INSTALL_ROOT"
+tar --extract \
+    --file "$TARBALL" \
+    --directory "$INSTALL_ROOT"
+
+mkdir -p "$HOME/.local/bin"
+ln --symbolic --force "$INSTALL_ROOT/fzf" "$BIN_LINK"
+
+echo "Installed fzf"

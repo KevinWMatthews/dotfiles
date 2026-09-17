@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+{{ template "bash-helpers.sh" . }}
+
+if [ -f "$HOME/.bashrc" ] && [ ! -f "$HOME/.bashrc.orig" ]; then
+    echo_command "Backing up .bashrc..."
+    cp "$HOME/.bashrc" "$HOME/.bashrc.orig"
+fi

@@ -1,0 +1,75 @@
+alias ..='cd ..'
+alias .1='cd ..'
+alias .2='cd ../..'
+alias .3='cd ../../..'
+alias .4='cd ../../../..'
+alias .5='cd ../../../../..'
+alias .6='cd ../../../../../..'
+
+# Add an "alert" alias for long running commands.  Use like so:
+#   sleep 10; alert
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+alias aliasconfig='$EDITOR $HOME/.bash_aliases'
+
+alias b='batcat --paging=always --style=plain'
+alias B='batcat --paging=always'
+alias bashconfig='$EDITOR $HOME/.bashrc'
+alias bat='batcat --paging=always'
+
+alias clrenv='unset'
+alias cp='cp --interactive'
+
+alias diff='diff --color=always'
+alias dir='dir --color=always --classify'
+
+alias fd='fdfind'
+alias fzb='fzf --bind "enter:become(batcat --paging=always {})"'
+# TODO replace with EDITOR
+alias fze='fzf --bind "enter:become($EDITOR {})"'
+alias fzl='fzf --bind "enter:become(ls {})"'
+alias fzll='fzf --bind "enter:become(ll {})"'
+alias fzt='fzf --bind "enter:become(tree {})"'
+
+{{- if eq .chezmoi.hostname "kevin-rog" }}
+alias get_esprs='. /home/kevin/esp/scripts/export_esp_rs.sh'
+alias get_idf='. $HOME/esp/esp-idf/export.sh'
+{{- end }}
+
+alias l='ls -CF'
+alias l1='ls --color=always --classify -1'
+alias la='ls -A'
+alias ll='ls -alF'
+alias ln='ln --interactive'
+alias lstty='ls --color=always /dev/tty*'
+
+mkcd() {
+    mkdir "$1"
+    cd "$1"
+}
+
+alias mv='mv --interactive'
+
+alias nvimconfig='$EDITOR ~/.config/nvim'
+
+alias rmd='rm -r'
+
+{{- if eq .chezmoi.hostname "kevin-rog" }}
+alias rclone_mount='rclone mount gdrive: ~/gdrive --vfs-cache-mode full &'
+alias rc_unmount='fusermount -u ~/gdrive'
+{{- end }}
+
+setenv() {
+    export $1="$2"
+}
+alias tmuxconfig='$EDITOR ~/.config/tmux'
+alias tree='tree -C -F'
+
+alias unsetenv=unset
+
+alias vimconfig='$EDITOR ~/.config/vim'
+
+{{- if eq .chezmoi.hostname "kevin-rog" }}
+alias wezconfig='$EDITOR ~/.config/wezterm/'
+{{- end }}
+alias xtask='cargo xtask'

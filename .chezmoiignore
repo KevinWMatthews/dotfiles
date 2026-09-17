@@ -1,0 +1,4 @@
+{{- if not (lookPath "tmux") }}
+dot_tmux.conf
+dot_config/tmux/**
+{{- end }}

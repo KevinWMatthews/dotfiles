@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+{{ template "bash-helpers.sh" . }}
+
+echo_command "Installing nvim..."
+
+{{- if eq .chezmoi.arch "amd64" }}
+ARCH="x86_64"
+{{- else }}
+{{ fail (printf "unsupported arch: %s" .chezmoi.arch) }}
+{{- end }}
+
+{{- if not .nvim.version }}
+{{ fail "nvim.version is not set" }}
+{{- else }}
+VERSION="{{ .nvim.version }}"
+{{- end }}
+
+INSTALL_ROOT="$HOME/.local/opt/nvim-$VERSION"
+BIN_LINK="$HOME/.local/bin/nvim"
+
+# Exit success if already installed
+# To reinstall, delete the binary and force chezmoi to apply
+if [ -x "$BIN_LINK" ] && [ "$(readlink -f "$BIN_LINK")" = "$INSTALL_ROOT/bin/nvim" ]; then
+    echo "nvim already installed"
+    exit 0
+fi
+
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+TARBALL="$TMP/nvim-$VERSION.tar.gz"
+
+URL="https://github.com/neovim/neovim/releases/download/$VERSION/nvim-linux-$ARCH.tar.gz"
+echo "Downloading $URL to $TARBALL..."
+curl --fail --silent --show-error \
+    --location "$URL" \
+    --output "$TARBALL"
+
+DEST="$(dirname "$INSTALL_ROOT")"
+echo "Extracting $TARBALL to $DEST..."
+rm -rf "$INSTALL_ROOT"
+mkdir -p "$DEST"
+tar --extract \
+    --file "$TARBALL" \
+    --directory "$DEST" \
+    --transform "s|^nvim-linux-$ARCH|nvim-$VERSION|"
+
+mkdir -p "$HOME/.local/bin"
+ln --symbolic --force "$INSTALL_ROOT/bin/nvim" "$BIN_LINK"
+echo "Installed nvim"

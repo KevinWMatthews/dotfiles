@@ -1,0 +1,13 @@
+---
+bat:
+  version: v0.26.1
+fzf:
+  version: v0.74.4
+nvim:
+  version: v0.12.5
+ripgrep:
+  version: 15.2.0
+tmux:
+  version: 3.7c
+tpack:
+  version: v2.0.6
