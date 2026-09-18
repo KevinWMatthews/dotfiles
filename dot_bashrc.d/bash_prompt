@@ -1,0 +1,282 @@
+###
+# Customizing the bash prompt. Hold on tight...
+# TODO Add references to good docs here
+###
+
+# set variable identifying the chroot you work in (used in the prompt below)
+if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+
+# set a fancy prompt (non-color, unless we know we "want" color)
+case "$TERM" in
+xterm-color | *-256color) color_prompt=yes ;;
+esac
+
+# uncomment to force a colored prompt, if the terminal has the capability
+#force_color_prompt=yes
+
+if [ -n "$force_color_prompt" ]; then
+    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+        # We have color support; assume it's compliant with Ecma-48
+        # (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+        # a case would tend to support setf rather than setaf.)
+        color_prompt=yes
+    else
+        color_prompt=
+    fi
+fi
+
+#if [ "$color_prompt" = yes ]; then
+#    PS0='\[\e]133;C\e\\\]'
+#    PS1='\[\e]133;A\e\\\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ \[\e]133;B\e\\\]'
+#else
+#    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+#fi
+#unset color_prompt force_color_prompt
+
+# If this is an xterm set the title to user@host:dir
+case "$TERM" in
+xterm* | rxvt*)
+    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+    ;;
+*) ;;
+esac
+
+if [ "$color_prompt" = yes ]; then
+    # Set bash prompt variable
+    PS0='\[\e]133;C\e\\\]'
+    # 'start prompt' indicator
+    PS1='\[\e]133;A\e\\\]'
+    # chroot, if set
+    PS1+='${debian_chroot:+($debian_chroot)}'
+    # colorized "user@host:"
+    PS1+='\[\033[01;32m\]\u@\h\[\033[00m\]:'
+    # colorized current directory
+    PS1+='\[\033[01;34m\]\w\[\033[00m\]'
+    # right-justified timestamp
+    PS1+='\[\033[s\033[${COLUMNS}C\033[19D\]\D{%Y-%m-%d %T}\[\033[u\]'
+    # prompt indicator on a newline
+    PS1+='\n\$ '
+    # 'stop prompt' indicator
+    PS1+='\[\e]133;B\e\\\]'
+
+    # One-line version (TODO add timestamp):
+    #PS1='\[\e]133;A\e\\\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ \[\e]133;B\e\\\]'
+else
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+fi
+unset color_prompt force_color_prompt
+
+###
+# Prompt Variables
+#
+# Prompt variables has special escaping:
+# \[ and \] indicate that the enclosed characters produce no visible output
+#
+# TODO finish a high-level overview of escaping (CSI vs OSC vs ?)
+
+###
+# PS0: bash prompt variable
+# This value is displayed:
+# - after a command is read
+# - before that command is executed
+#
+# PS1: primary prompt
+# Displayed before command entry
+#
+# PS2: continuation prompt
+# Displays on a multi-lineinput
+#
+# PS3: prompt used by `select` builtin (? TODO)
+#
+# PS4: prefix shown for each command in `xtrace` output (? TODO)
+
+###
+# Control Sequence Indicators (CSI)
+###
+# ESC [ <parameter bytes> <intermediate bytes> <final byte>
+# Prefix is one of:
+# ESC[
+# \e[
+# \033[
+# \x1b[
+#
+# I often use 033 (CSI) to contrast it with 133 (OSC) and other
+#
+# Parameter byte(s):
+# 0, 1, etc
+#
+# Intermediate bytes:
+# ?
+#
+# Final byte indicates terminal behavior such as cursor motion, color attribute, etc, such as:
+# - cursor up: A
+# - cursor down: B
+# - cursor right: C
+# - cursor left: D
+# - Select Graphic Rendition (color attributes): m
+
+###
+# Operating System Commands (OSC)
+###
+# ESC ] <Ps> ; <Pt> ST
+# where:
+# - Ps is a numeric command identifier
+# - ; is a delimiter
+# - Pt is a parameter payload
+# - ST is a string terminator, ESC \
+#   - May also be BEL
+#   - Often written as ESC \\
+
+###
+# OSC 133: shell integration
+# This defines semantic prompt markers:
+# - A is prompt start (the beginning of the shell prompt)
+# - B is prompt end / command input start (where what you type begins)
+# - C is command output start (you pressed Enter; output begins here)
+# - D is command finished (optionally carries the exit status, e.g. 133;D;0)
+#
+# Example:
+# ESC ] 133 ; A ESC \
+# or in more compact form:
+# \e]133;A\e\
+
+###
+# CSI 033: Select Graphic Rendition (SGR)
+# That is, text rendering attributes
+#
+## Colors:
+# Set with the CSI final byte `m`
+#
+# Attributes:
+# 0: reset
+# 1: bold
+# 2: dim
+# 3: italic (if supported)
+# 4: underline
+# 5: slow blink
+# 6: rapid blink
+# etc
+#
+# Colors:
+# _0: black
+# _1: red
+# _2: green
+# _3: yellow
+# _4: blue
+# _5: magenta
+# _6: cyan
+# _7: white
+# _9: default foreground/background (reset, not bright)
+#
+# Where:
+# 30-39 are foreground
+# 40-49 are background
+# 90-97 are bright foreground
+# 100-109 are bright background
+#
+# "Bright black" is grey
+#
+## Cursor motions:
+# TODO
+
+###################
+# Original Prompt #
+###################
+#PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+
+#################
+# Custom Prompt #
+#################
+### Prompt start: \[\e]133;A\e\\\]
+# \[ starts an enclosure within which characters produce no visible output
+# \e] is an escape character for Operating System Commands
+# 133 is the Operating System Command 'shell integration'
+# ; is a delimiter
+# A is start prompt
+# B is end prompt
+# C is command output start
+# \e\\ is the string terminator
+# \] ends the enclosure within which characters produce no visible output
+#
+###
+# Show chroot if used: ${debian_chroot:+($debian_chroot)}
+# debian_chroot is a local variable that is set earlier in bashrc
+# ${parameter:+word}
+# If parameter is set, expand to word
+# If parameter is unset or empty, expands to an empty string
+# Here, surround the value of $debian_chroot with () if it is set
+# Otherwise, omit
+#
+###
+# Set text rendering to bold + green foreground: \[\033[01;32m\]
+# \[ start of enclosure of non-printing characters
+# \033[ is the Command Sequence Indicator prefix
+# 01;32 is two parameter bytes: 1 for bold, 32 for color foreground gren
+# m is the final byte for Select Graphic Rendition
+# \] ends the enclosure of non-printing characters
+#
+###
+# user@host
+# \u@\h
+#
+###
+# Clear formatting: \[033[00m\]
+# \[ starts non-printing enclosure
+# 033[ is the Command Sequence Identifier Prefix
+# 00m resets text rendering
+# \] closes non-printing enclosure
+#
+###
+# Colon
+# : (just that)
+#
+###
+# Set text rendering to bold and blue: \[\033[01;34m\]
+# \[
+# \033[
+# 01;34
+# m
+# \]
+#
+###
+# Current working directory, with $HOME as ~
+# \w
+#
+###
+# Clear formatting: \[0033[00m\]
+# \[ starts non-printing enclosure
+# 033[ is the Command Sequence Identifier Prefix
+# 00m resets text rendering
+# \] closes non-printing enclosure
+#
+###
+# Prompt indicator: \$
+# \$ is '$' for non-root users and '#' for root users
+#
+###
+# Prompt end: \[\e]133;B\e\\\]
+# \[ starts an enclosure within which characters produce no visible output
+# \e] is an escape character for Operating System Commands
+# 133 is the Operating System Command 'shell integration'
+# ; is a delimiter
+# A is start prompt
+# B is end prompt
+# C is command output start
+# \e\\ is the string terminator
+# \] ends the enclosure within which characters produce no visible output
+#
+# Right-justified time/date: \[\033[s\033[${COLUMNS}\033[19D\]\D{%Y-%m-%d %T}\[\033[u\]
+# Non-printing sequence begin: \[
+# Save cursor position: \033[s
+# Move cursor right: \033[${COLUMNS}C
+# Move cursor left: \033[19D
+# Non-printing sequence end: \]
+# Date/time stamp: \D{%Y-%m-%d %T}
+# Non-printing sequence begin: \[
+# Restore cursor position: \033[u
+# Non-printing sequence end: \]
+#
+# COLUMNS is an environment variable
+
