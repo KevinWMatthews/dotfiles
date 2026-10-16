@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+{{ template "bash-helpers.sh" . }}
+
+echo_command "Installing fzf-git..."
+
+{{- if eq .chezmoi.arch "amd64" }}
+ARCH="amd64"
+{{- else }}
+{{ fail (printf "unsupported arch: %s" .chezmoi.arch) }}
+{{- end }}
+
+{{- if not .fzf_git.version }}
+{{ fail "fzf_git.version is not set" }}
+{{- else }}
+VERSION="{{ .fzf_git.version }}"
+{{- end }}
+
+# shorten the SHA for ease
+SHORT_SHA=${VERSION:0:7}
+INSTALL_ROOT="$HOME/.local/opt/fzf-git-$SHORT_SHA"
+
+# Exit success if already installed
+# To reinstall, delete the binary and clear chezmoi's scriptState, then apply
+if [ -f "$INSTALL_ROOT/fzf-git.sh" ]; then
+    echo "fzf-git already installed"
+    exit 0
+fi
+
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+ARTIFACT="$TMP/fzf-git-$VERSION.sh"
+
+URL="https://raw.githubusercontent.com/junegunn/fzf-git.sh/$VERSION/fzf-git.sh"
+echo "Downloading $URL to $ARTIFACT..."
+curl --fail --silent --show-error \
+    --location "$URL" \
+    --output "$ARTIFACT"
+
+DEST="$(dirname "$INSTALL_ROOT")"
+echo "Moving $ARTIFACT to $DEST..."
+rm -rf "$INSTALL_ROOT"
+mkdir -p "$INSTALL_ROOT"
+mv "$ARTIFACT" "$INSTALL_ROOT/fzf-git.sh"
+
+echo "Installed fzf-git"

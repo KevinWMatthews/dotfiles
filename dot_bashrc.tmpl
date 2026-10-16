@@ -70,6 +70,12 @@ fi
 # fzf integration
 eval "$(fzf --bash)"
 
+# source fzf-git plugin
+FZF_GIT_SH="$HOME/.local/opt/fzf-git-{{ .fzf_git.version | trunc 7 }}/fzf-git.sh"
+if [ -f "$FZF_GIT_SH" ]; then
+    source "$FZF_GIT_SH"
+fi
+
 {{- $clipCmd := "xclip -selection clipboard" -}}
 {{- if contains "microsoft" (.chezmoi.kernel.osrelease | lower) }}
 {{-   $clipCmd = "clip.exe" }}
