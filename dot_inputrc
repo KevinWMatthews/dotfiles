@@ -1,0 +1,16 @@
+# Configure readline's behavior, which is used for terminal.
+# Readline has its own syntax; see the man pages or
+# https://tiswww.case.edu/php/chet/readline/rluserman.html#Readline-Init-File
+
+# To see current keybindings, use:
+# bind -p
+# bind -p -m <mode>
+# where mode is, for example, vi-insert
+
+$if mode=vi
+    set keymap vi-insert
+    "\C-p": previous-history
+    "\C-n": next-history
+    # TODO Consider unsetting lnext in bashrc and using Ctrl-V to paste
+    "\C-v": self-insert
+$endif
